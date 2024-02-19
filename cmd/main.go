@@ -1,11 +1,15 @@
 package main
 
 import (
+	"errors"
 	"html/template"
-	"io"
+	"log"
+	"net/http"
+	"os"
 
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/joho/godotenv"
 )
 
 type Template struct {
@@ -18,19 +22,56 @@ func newTemplate() *Template {
 	}
 }
 
-func (t *Template) Render(w io.Writer, title string, data interface{}, c echo.Context) error {
-	return t.tmpl.ExecuteTemplate(w, title, data)
+type Handler func(w http.ResponseWriter, r *http.Request) error
+
+func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if err := h(w, r); err != nil {
+		// handle returned error here.
+		w.WriteHeader(503)
+		w.Write([]byte("bad"))
+	}
 }
 
+func tesst(w http.ResponseWriter, r *http.Request) error {
+	q := r.URL.Query().Get("err")
+
+	if q != "" {
+		w.Write([]byte("Create a new snippet...\n"))
+		return errors.New(q)
+	}
+
+	log.Println("ERROR POST")
+	w.Write([]byte("Create a new snippet...\n"))
+	return nil
+}
+
+// func (t *Template) Render(w io.Writer, title string, data interface{}, c echo.Context) error {
+// 	return t.tmpl.ExecuteTemplate(w, title, data)
+// }
+
 func main() {
-	e := echo.New()
+	// Load Environment Variables
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+	PORT := os.Getenv("SERVER_PORT")
 
-	e.Renderer = newTemplate()
-	e.Use(middleware.Logger())
+	chiR := chi.NewRouter()
+	chiR.Use(middleware.Logger)
 
-	e.GET("/", func(c echo.Context) error {
-		return c.Render(200, "index", nil)
+	chiR.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Hello from Snippetbox\n"))
 	})
 
-	e.Logger.Fatal(e.Start(":1111"))
+	chiR.Route("/snippet", func(rr chi.Router) {
+		rr.Get("/view", func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("Display a specific snippet...\n"))
+
+		})
+
+	})
+
+	log.Println("Starting server on :" + PORT)
+	http.ListenAndServe(":"+PORT, chiR)
 }
