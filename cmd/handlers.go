@@ -1,16 +1,10 @@
 package main
 
-import {
+import (
 	"fmt"
-	"log"
 	"net/http"
-	"os"
 	"strconv"
-
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	"github.com/joho/godotenv"
-}
+)
 
 func home(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Hello from Snippetbox\n"))
@@ -30,4 +24,10 @@ func snippetView(w http.ResponseWriter, r *http.Request) {
 func snippetCreate(w http.ResponseWriter, r *http.Request) {
 	w.Header()
 	w.Write([]byte("Creating a new snippet...\n"))
+}
+
+func snippetCreateMethodNotAllowed(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path == "/snippet/create" {
+		w.Header().Set("Allow", http.MethodPost)
+	}
 }

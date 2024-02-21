@@ -34,10 +34,9 @@ func main() {
 		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte("Route does not exist...\n"))
 	})
+
 	chiRouter.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/snippet/create" {
-			w.Header().Set("Allow", http.MethodPost)
-		}
+		snippetCreateMethodNotAllowed(w, r)
 
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		w.Write([]byte("Method is not valid\n"))
