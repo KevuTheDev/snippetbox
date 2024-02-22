@@ -25,7 +25,7 @@ func main() {
 
 	chiRouter.Route("/snippet", func(cr chi.Router) {
 
-		cr.Get("/view", snippetView)
+		cr.HandleFunc("/view", snippetView)
 
 		cr.Post("/create", snippetCreate)
 	})

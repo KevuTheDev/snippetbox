@@ -10,8 +10,9 @@ import (
 
 func home(w http.ResponseWriter, r *http.Request) {
 	files := []string{
+		"./ui/html/partials/nav.html",
 		"./ui/html/base.html",
-		"./ui/html/index.html",
+		"./ui/html/pages/home.html",
 	}
 
 	ts, err := template.ParseFiles(files...)
@@ -21,7 +22,7 @@ func home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = ts.Execute(w, nil)
+	err = ts.ExecuteTemplate(w, "base", nil)
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
