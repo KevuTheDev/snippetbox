@@ -5,46 +5,35 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/joho/godotenv"
 )
 
 func main() {
 	// Load Environment Variables
-	err := godotenv.Load()
-	if err != nil {
+	errGDE := godotenv.Load()
+	if errGDE != nil {
 		log.Fatal("Error loading .env file")
 	}
 	PORT := os.Getenv("SERVER_PORT")
 
-	chiRouter := chi.NewRouter()
-	chiRouter.Use(middleware.Logger)
+	// Setup Loggers
+	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 
+	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime)
+
+	// Setup Router
+	mux := http.NewServeMux()
+
+	// - Static Files
 	fs := http.FileServer(http.Dir("./ui/static"))
-	chiRouter.Handle("/static/*", http.StripPrefix("/static/", fs))
+	mux.Handle("/static/*", http.StripPrefix("/static/", fs))
 
-	chiRouter.Get("/", home)
+	// - Routing
+	mux.HandleFunc("/", home)
+	mux.HandleFunc("/snippet/view", snippetView)
+	mux.HandleFunc("/snippet/create", snippetCreate)
 
-	chiRouter.Route("/snippet", func(cr chi.Router) {
-
-		cr.HandleFunc("/view", snippetView)
-
-		cr.Post("/create", snippetCreate)
-	})
-
-	chiRouter.NotFound(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte("Route does not exist...\n"))
-	})
-
-	chiRouter.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
-		snippetCreateMethodNotAllowed(w, r)
-
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		w.Write([]byte("Method is not valid\n"))
-	})
-
-	log.Println("Starting server on :" + PORT)
-	http.ListenAndServe(":"+PORT, chiRouter)
+	infoLog.Printf("Starting server on port %s", PORT)
+	errServer := http.ListenAndServe(":"+PORT, mux)
+	errorLog.Fatal(errServer)
 }

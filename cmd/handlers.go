@@ -9,6 +9,11 @@ import (
 )
 
 func home(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/" {
+		http.NotFound(w, r)
+		return
+	}
+
 	files := []string{
 		"./ui/html/partials/nav.html",
 		"./ui/html/base.html",
@@ -41,7 +46,13 @@ func snippetView(w http.ResponseWriter, r *http.Request) {
 }
 
 func snippetCreate(w http.ResponseWriter, r *http.Request) {
-	w.Header()
+	if r.Method != "POST" {
+		w.Header().Set("Allow", "POST")
+
+		http.Error(w, "Method Now Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
 	w.Write([]byte("Creating a new snippet...\n"))
 }
 
