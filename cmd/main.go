@@ -21,6 +21,9 @@ func main() {
 	chiRouter := chi.NewRouter()
 	chiRouter.Use(middleware.Logger)
 
+	fs := http.FileServer(http.Dir("./ui/static"))
+	chiRouter.Handle("/static/*", http.StripPrefix("/static/", fs))
+
 	chiRouter.Get("/", home)
 
 	chiRouter.Route("/snippet", func(cr chi.Router) {
